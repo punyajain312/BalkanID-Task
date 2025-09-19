@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import UploadPage from "./pages/UploadPage";
+import SearchPage from "./pages/SearchPage";
 import { Toaster } from "react-hot-toast";
 import type { JSX } from "react";
 
@@ -25,6 +26,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <UploadPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/search"
+            element={
+              <ProtectedRoute>
+                <SearchPage />
               </ProtectedRoute>
             }
           />

@@ -5,6 +5,8 @@ import (
     "encoding/json"
     "log"
     "net/http"
+    "strconv"
+    "time"
 )
 
 type SearchHandler struct {
@@ -12,29 +14,25 @@ type SearchHandler struct {
 }
 
 func (h *SearchHandler) SearchFiles(w http.ResponseWriter, r *http.Request) {
-
-	// TEST USER
-    // userId := "11111111-1111-1111-1111-111111111111" 
-
-	userId, ok := r.Context().Value("user_id").(string)
-	if !ok || userId == "" {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
+    userId, ok := r.Context().Value("user_id").(string)
+    if !ok || userId == "" {
+        http.Error(w, "unauthorized", http.StatusUnauthorized)
+        return
+    }
 
     // Query params
-    q := r.URL.Query().Get("q")            // filename search
-    mime := r.URL.Query().Get("mime")      // MIME type filter
+    q := r.URL.Query().Get("q")
+    mime := r.URL.Query().Get("mime")
     minSize := r.URL.Query().Get("min_size")
     maxSize := r.URL.Query().Get("max_size")
-    from := r.URL.Query().Get("from")      // date range
+    from := r.URL.Query().Get("from")
     to := r.URL.Query().Get("to")
 
     // Base query
     query := `
         SELECT f.id, f.filename, f.mime_type, f.size, f.created_at, b.hash, b.ref_count
         FROM files f
-        JOIN file_blobs b ON f.file_hash = b.hash
+        JOIN file_blobs b ON f.blob_id = b.id
         WHERE f.user_id = $1
     `
     args := []interface{}{userId}
@@ -42,39 +40,46 @@ func (h *SearchHandler) SearchFiles(w http.ResponseWriter, r *http.Request) {
 
     // Dynamic filters
     if q != "" {
-        query += " AND f.filename ILIKE $" + string(rune(argIndex))
+        query += " AND f.filename ILIKE $" + strconv.Itoa(argIndex)
         args = append(args, "%"+q+"%")
         argIndex++
     }
     if mime != "" {
-        query += " AND f.mime_type = $" + string(rune(argIndex))
+        query += " AND f.mime_type = $" + strconv.Itoa(argIndex)
         args = append(args, mime)
         argIndex++
     }
     if minSize != "" {
-        query += " AND f.size >= $" + string(rune(argIndex))
-        args = append(args, minSize)
-        argIndex++
+        if val, err := strconv.ParseInt(minSize, 10, 64); err == nil {
+            query += " AND f.size >= $" + strconv.Itoa(argIndex)
+            args = append(args, val)
+            argIndex++
+        }
     }
     if maxSize != "" {
-        query += " AND f.size <= $" + string(rune(argIndex))
-        args = append(args, maxSize)
-        argIndex++
+        if val, err := strconv.ParseInt(maxSize, 10, 64); err == nil {
+            query += " AND f.size <= $" + strconv.Itoa(argIndex)
+            args = append(args, val)
+            argIndex++
+        }
     }
     if from != "" {
-        query += " AND f.created_at >= $" + string(rune(argIndex))
-        args = append(args, from)
-        argIndex++
+        if t, err := time.Parse("2006-01-02", from); err == nil {
+            query += " AND f.created_at >= $" + strconv.Itoa(argIndex)
+            args = append(args, t)
+            argIndex++
+        }
     }
     if to != "" {
-        query += " AND f.created_at <= $" + string(rune(argIndex))
-        args = append(args, to)
-        argIndex++
+        if t, err := time.Parse("2006-01-02", to); err == nil {
+            query += " AND f.created_at <= $" + strconv.Itoa(argIndex)
+            args = append(args, t)
+            argIndex++
+        }
     }
 
     query += " ORDER BY f.created_at DESC"
 
-    // Run query
     rows, err := h.DB.Query(query, args...)
     if err != nil {
         log.Println("Search query error:", err)
@@ -103,5 +108,6 @@ func (h *SearchHandler) SearchFiles(w http.ResponseWriter, r *http.Request) {
         files = append(files, f)
     }
 
+    w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(files)
 }

@@ -18,3 +18,9 @@ export const listFiles = (token: string) =>
   axios.get(`${API_URL}/files`, {
     headers: { Authorization: `Bearer ${token}` },
   });
+
+export const searchFiles = (params: Record<string, string>, token: string) =>
+  axios.get(`${API_URL}/search`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  });
