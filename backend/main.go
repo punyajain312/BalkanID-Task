@@ -8,6 +8,8 @@ import (
 	"balkanid-capstone/internal/db"
 	"balkanid-capstone/internal/handlers"
 	"balkanid-capstone/internal/middleware"
+	"balkanid-capstone/internal/repo"
+	"balkanid-capstone/internal/services"
 
 	"github.com/rs/cors"
 	_ "github.com/lib/pq"
@@ -22,12 +24,29 @@ func main() {
 	}
 	defer database.Close()
 
-	// Handlers
-	uploadHandler := &handlers.UploadHandler{DB: database}
-	fileHandler := &handlers.FileHandler{DB: database}
-	searchHandler := &handlers.SearchHandler{DB: database}
+	// handler -> service -> repo
+	// Auth
+	userRepo := repo.NewUserRepo(database)
+	authService := services.NewAuthService(userRepo)
+	authHandler := handlers.NewAuthHandler(authService)
+
+	// Files
+	fileRepo := repo.NewFileRepo(database)
+	fileService := services.NewFileService(fileRepo, database)
+	fileHandler := handlers.NewFileHandler(fileService)
+
+	// Search
+	searchRepo := repo.NewSearchRepo(database)
+	searchService := services.NewSearchService(searchRepo)
+	searchHandler := handlers.NewSearchHandler(searchService)
+
+	// Upload
+	uploadRepo := repo.NewUploadRepo(database)
+	uploadService := services.NewUploadService(uploadRepo)
+	uploadHandler := handlers.NewUploadHandler(uploadService)
+	
+	// Other handlers (not refactored yet, still using DB directly)
 	statsHandler := &handlers.StatsHandler{DB: database}
-	authHandler := &handlers.AuthHandler{DB: database}
 	adminHandler := &handlers.AdminHandler{DB: database}
 
 	// Router
