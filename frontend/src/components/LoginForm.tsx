@@ -3,6 +3,7 @@ import { login } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
 import SharedInput from "./SharedInput";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function LoginForm() {
   const { login: setAuth } = useAuth();
@@ -16,10 +17,11 @@ export default function LoginForm() {
     try {
       const res = await login(email, password);
       setAuth(res.data.token);
+      toast.success("Login successful 🎉");
       navigate("/upload");
     } catch (err: any) {
+      toast.error("Login failed ❌");
       console.error(err);
-      alert("Login failed. Check console for details.");
     }
   };
 

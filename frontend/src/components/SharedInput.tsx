@@ -3,6 +3,7 @@ interface Props {
   placeholder: string;
   value: string;
   onChange: (val: string) => void;
+  label?: string;
 }
 
 export default function SharedInput({ type, placeholder, value, onChange }: Props) {

@@ -1,6 +1,7 @@
 import { useState, type DragEvent } from "react";
 import { uploadFiles } from "../api/files";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function FileUploadForm() {
   const { token } = useAuth();
@@ -27,10 +28,11 @@ export default function FileUploadForm() {
     setUploading(true);
     try {
       const res = await uploadFiles(selectedFiles, token);
-      alert("Upload successful: " + JSON.stringify(res.data));
+      toast.success("Upload successful " + res.data.message);
       setSelectedFiles([]);
     } catch (err: any) {
-      alert("Upload failed: " + (err.response?.data?.error || err.message));
+      console.error("Upload error:", err.response || err.message);
+      toast.error("Upload failed ");
     } finally {
       setUploading(false);
     }
