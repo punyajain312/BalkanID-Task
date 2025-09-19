@@ -3,7 +3,11 @@ import { uploadFiles } from "../api/files";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
-export default function FileUploadForm() {
+export default function FileUploadForm({
+  onUploadSuccess,
+}: {
+  onUploadSuccess: () => void;
+}) {
   const { token } = useAuth();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -27,12 +31,13 @@ export default function FileUploadForm() {
     if (!token || selectedFiles.length === 0) return;
     setUploading(true);
     try {
-      const res = await uploadFiles(selectedFiles, token);
-      toast.success("Upload successful " + res.data.message);
-      setSelectedFiles([]);
+      await uploadFiles(selectedFiles, token);
+      toast.success("Upload successful ✅");
+      setSelectedFiles([]); // clear file list
+      onUploadSuccess(); // ✅ trigger FileList refresh
     } catch (err: any) {
       console.error("Upload error:", err.response || err.message);
-      toast.error("Upload failed ");
+      toast.error("Upload failed ❌");
     } finally {
       setUploading(false);
     }
@@ -40,6 +45,7 @@ export default function FileUploadForm() {
 
   return (
     <div className="space-y-4">
+      {/* Drag & Drop area */}
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -48,13 +54,10 @@ export default function FileUploadForm() {
         Drag & Drop files here
       </div>
 
-      <input
-        type="file"
-        multiple
-        onChange={handleFileChange}
-        className="w-full"
-      />
+      {/* File input */}
+      <input type="file" multiple onChange={handleFileChange} className="w-full" />
 
+      {/* Preview selected files */}
       {selectedFiles.length > 0 && (
         <ul className="text-sm text-gray-600">
           {selectedFiles.map((f, i) => (
@@ -63,6 +66,7 @@ export default function FileUploadForm() {
         </ul>
       )}
 
+      {/* Upload button */}
       <button
         onClick={handleUpload}
         disabled={uploading || selectedFiles.length === 0}

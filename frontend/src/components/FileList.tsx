@@ -1,18 +1,57 @@
 import { useEffect, useState } from "react";
-import { listFiles } from "../api/files";
+import { listFiles, deleteFile, generatePublicLink } from "../api/files";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
-export default function FileList() {
+interface FileItem {
+  id: string;
+  filename: string;
+  mime_type: string;
+  size: number;
+  created_at: string;
+  hash: string;
+}
+
+export default function FileList({ refreshSignal }: { refreshSignal: number }) {
   const { token } = useAuth();
-  const [files, setFiles] = useState<any[]>([]);
+  const [files, setFiles] = useState<FileItem[]>([]);
+
+  const loadFiles = async () => {
+    if (!token) return;
+    try {
+      const res = await listFiles(token);
+      setFiles(res.data.files || res.data);
+    } catch (err) {
+      toast.error("Failed to fetch files");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!token) return;
+    try {
+      await deleteFile(id, token);
+      toast.success("File deleted");
+      await loadFiles(); // ✅ refresh after delete
+    } catch {
+      toast.error("Delete failed");
+    }
+  };
+
+  const handleShare = async (id: string) => {
+    if (!token) return;
+    try {
+      const res = await generatePublicLink(id, token);
+      const link = res.data.link;
+      navigator.clipboard.writeText(link);
+      toast.success("Public link copied!");
+    } catch {
+      toast.error("Failed to generate share link");
+    }
+  };
 
   useEffect(() => {
-    if (token) {
-      listFiles(token)
-        .then((res) => setFiles(res.data.files || []))
-        .catch((err) => console.error("Error fetching files:", err));
-    }
-  }, [token]);
+    loadFiles();
+  }, [token, refreshSignal]); // ✅ reload after upload/delete
 
   return (
     <div className="mt-6">
@@ -21,10 +60,32 @@ export default function FileList() {
         <p className="text-gray-500">No files uploaded yet.</p>
       ) : (
         <ul className="space-y-2">
-          {files.map((file, idx) => (
-            <li key={idx} className="p-2 border rounded flex justify-between">
-              <span>{file.filename}</span>
-              <span className="text-sm text-gray-500">{file.size} bytes</span>
+          {files.map((file) => (
+            <li
+              key={file.id}
+              className="p-2 border rounded flex justify-between items-center"
+            >
+              <div>
+                <p className="font-medium">{file.filename}</p>
+                <p className="text-sm text-gray-500">
+                  {file.mime_type} · {file.size} bytes ·{" "}
+                  {new Date(file.created_at).toLocaleString()}
+                </p>
+              </div>
+              <div className="space-x-2">
+                <button
+                  onClick={() => handleShare(file.id)}
+                  className="px-2 py-1 bg-yellow-500 text-white text-sm rounded"
+                >
+                  Share
+                </button>
+                <button
+                  onClick={() => handleDelete(file.id)}
+                  className="px-2 py-1 bg-red-500 text-white text-sm rounded"
+                >
+                  Delete
+                </button>
+              </div>
             </li>
           ))}
         </ul>
