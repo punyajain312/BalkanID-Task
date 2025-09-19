@@ -10,7 +10,7 @@ import (
     "golang.org/x/crypto/bcrypt"
 )
 
-var jwtKey = []byte("supersecretkey") // ⚠️ replace in production
+var jwtKey = []byte("supersecretkey")
 
 type AuthHandler struct {
     DB *sql.DB
