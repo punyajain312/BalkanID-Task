@@ -58,7 +58,6 @@ func (h *UploadHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
         }
         uploaded = append(uploaded, result)
     }
-
     w.WriteHeader(http.StatusCreated)
     json.NewEncoder(w).Encode(map[string]interface{}{
         "message": "upload successful",

@@ -33,8 +33,8 @@ export default function FileUploadForm({
     try {
       await uploadFiles(selectedFiles, token);
       toast.success("Upload successful ✅");
-      setSelectedFiles([]); // clear file list
-      onUploadSuccess(); // ✅ trigger FileList refresh
+      setSelectedFiles([]);
+      onUploadSuccess(); // ✅ tell parent (Dashboard) to refresh + redirect
     } catch (err: any) {
       console.error("Upload error:", err.response || err.message);
       toast.error("Upload failed ❌");
@@ -45,7 +45,6 @@ export default function FileUploadForm({
 
   return (
     <div className="space-y-4">
-      {/* Drag & Drop area */}
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -54,10 +53,8 @@ export default function FileUploadForm({
         Drag & Drop files here
       </div>
 
-      {/* File input */}
       <input type="file" multiple onChange={handleFileChange} className="w-full" />
 
-      {/* Preview selected files */}
       {selectedFiles.length > 0 && (
         <ul className="text-sm text-gray-600">
           {selectedFiles.map((f, i) => (
@@ -66,7 +63,6 @@ export default function FileUploadForm({
         </ul>
       )}
 
-      {/* Upload button */}
       <button
         onClick={handleUpload}
         disabled={uploading || selectedFiles.length === 0}

@@ -23,19 +23,27 @@ func (r *FileRepo) ListFiles(userID string) ([]models.File, error) {
         ORDER BY f.created_at DESC
     `, userID)
     if err != nil {
-        return nil, err
+        return []models.File{}, err 
     }
     defer rows.Close()
 
-    var files []models.File
+    files := make([]models.File, 0) 
     for rows.Next() {
         var f models.File
-        if err := rows.Scan(&f.ID, &f.Filename, &f.MimeType, &f.Size, &f.CreatedAt, &f.Hash, &f.RefCount); err != nil {
-            return nil, err
+        if err := rows.Scan(
+            &f.ID, &f.Filename, &f.MimeType,
+            &f.Size, &f.CreatedAt, &f.Hash, &f.RefCount,
+        ); err != nil {
+            return []models.File{}, err
         }
         files = append(files, f)
     }
-    return files, nil
+
+    if err := rows.Err(); err != nil {
+        return []models.File{}, err
+    }
+
+    return files, nil 
 }
 
 func (r *FileRepo) GetFileBlob(tx *sql.Tx, fileID, userID string) (string, string, error) {

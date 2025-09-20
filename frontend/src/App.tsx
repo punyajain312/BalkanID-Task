@@ -3,11 +3,9 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import Dashboard from "./pages/Dashboard";
-import UploadPage from "./pages/UploadPage";
-import SearchPage from "./pages/SearchPage";
+import PublicFilesPage from "./pages/Public_Files";
 import { Toaster } from "react-hot-toast";
 import type { JSX } from "react";
-
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { token } = useAuth();
@@ -20,33 +18,26 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Always land at login first */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
+          {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+          {/* Dashboard */}
           <Route
-            path="/upload"
-            element={
-              <ProtectedRoute>
-                <UploadPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/search"
-            element={
-              <ProtectedRoute>
-                <SearchPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard"
+            path="/dashboard/*"
             element={
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
             }
           />
+
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="public" element={<PublicFilesPage />} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />

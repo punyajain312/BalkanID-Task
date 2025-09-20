@@ -16,12 +16,12 @@ export default function LoginForm() {
     e.preventDefault();
     try {
       const res = await login(email, password);
-      setAuth(res.data.token);
+      setAuth(res.data.token); // save token in context/localStorage
       toast.success("Login successful 🎉");
-      navigate("/upload");
+      navigate("/dashboard"); // ✅ redirect here
     } catch (err: any) {
+      console.error("Login error:", err);
       toast.error("Login failed ❌");
-      console.error(err);
     }
   };
 

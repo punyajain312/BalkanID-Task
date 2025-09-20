@@ -1,6 +1,9 @@
 package models
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+    "github.com/golang-jwt/jwt/v5"
+)
+
 
 type Credentials struct {
     Name     string `json:"name"`
@@ -41,4 +44,33 @@ type FileBlob struct {
 type UploadResult struct {
     Hash     string `json:"hash"`
     Filename string `json:"filename"`
+}
+
+const (
+    VisibilityPrivate   = "private"
+    VisibilityPublic    = "public"
+    VisibilityRestricted = "restricted"
+)
+
+type Share struct {
+    ID            string `json:"id"`
+    FileID        string `json:"file_id,omitempty"`
+    FolderID      string `json:"folder_id,omitempty"`
+    OwnerID       string `json:"owner_id"`
+    Visibility    string `json:"visibility"` // private, public, restricted
+    SharedWith    string `json:"shared_with,omitempty"`
+    DownloadCount int    `json:"download_count"`
+    CreatedAt     string `json:"created_at"`
+}
+
+type ShareRequest struct {
+    FileID     string `json:"file_id,omitempty"`
+    FolderID   string `json:"folder_id,omitempty"`
+    Visibility string `json:"visibility"`
+    SharedWith string `json:"shared_with,omitempty"`
+}
+
+type PublicStats struct {
+    FileID        string `json:"file_id"`
+    DownloadCount int    `json:"download_count"`
 }

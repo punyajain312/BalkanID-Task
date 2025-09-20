@@ -11,8 +11,8 @@ import (
 	"balkanid-capstone/internal/repo"
 	"balkanid-capstone/internal/services"
 
-	"github.com/rs/cors"
 	_ "github.com/lib/pq"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -44,13 +44,19 @@ func main() {
 	uploadRepo := repo.NewUploadRepo(database)
 	uploadService := services.NewUploadService(uploadRepo)
 	uploadHandler := handlers.NewUploadHandler(uploadService)
-	
+
+	// Public Files
+	shareRepo := repo.NewShareRepo(database)
+	shareService := services.NewShareService(shareRepo)
+	shareHandler := handlers.NewShareHandler(shareService)
+
 	// Other handlers (not refactored yet, still using DB directly)
 	statsHandler := &handlers.StatsHandler{DB: database}
 	adminHandler := &handlers.AdminHandler{DB: database}
 
 	// Router
 	mux := http.NewServeMux()
+	// mux.NewRouter();
 
 	// Public routes
 	mux.HandleFunc("/signup", authHandler.Signup)
@@ -62,6 +68,9 @@ func main() {
 	mux.Handle("/delete", middleware.AuthMiddleware(http.HandlerFunc(fileHandler.DeleteFile)))
 	mux.Handle("/search", middleware.AuthMiddleware(http.HandlerFunc(searchHandler.SearchFiles)))
 	mux.Handle("/stats", middleware.AuthMiddleware(http.HandlerFunc(statsHandler.GetStats)))
+	mux.Handle("/share", middleware.AuthMiddleware(http.HandlerFunc(shareHandler.CreateShare)))
+	mux.Handle("/share/access", http.HandlerFunc(shareHandler.AccessShare))
+	mux.Handle("/share/stats", http.HandlerFunc(shareHandler.PublicStats))
 
 	// Admin routes
 	mux.Handle("/admin/users", middleware.AuthMiddleware(middleware.AdminOnly(http.HandlerFunc(adminHandler.ListUsers))))
